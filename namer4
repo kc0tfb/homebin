@@ -1,0 +1,12 @@
+#!/bin/bash
+#
+# Add ID3v2 tags based on filenames:
+# Artist - Album - Track - Title.mp3 
+#
+ls -1 "${@:?Perhaps you could tell me which files to work on?}" | \
+awk -F % '{
+    File=$0;
+    gsub(" - ","%");
+    gsub("^0","",$3); # remove leading zero from track number
+    gsub(".mp3$","",$4);
+    system("id3v2 -a \042" $1 "\042 -A \042" $2 "\042 -T " $3 " -t \042" $4 "\042 \042" File "\042"); }'

@@ -1,0 +1,31 @@
+#!/usr/bin/gawk -f
+BEGIN {
+    OLDFS=FS; FS=":";
+    while ((getline < "/home/peter/mtfcc.dat") > 0) {
+        FEATURE[$1]=$2;
+    }
+    close("/home/peter/mtfcc.dat");
+    FS=OLDFS;
+
+  for (i in ARGV) {
+    while ((("dbfdump -m " ARGV[i]) | getline) > 0) {
+        if ( $1 == "MTFCC:" ) {
+            TALLY[$2]++;
+	    LASTFILE[$2]=ARGV[i];
+        }
+    }
+    close("dbfdump -m " ARGV[i]);
+  }
+}
+
+
+END {
+    longcount=1;
+    for (item in TALLY) {
+        tmplen=length(TALLY[item])
+        if (tmplen > longcount) longcount=tmplen;
+    }
+    for (item in TALLY) {
+        printf("%s %-" longcount "d %s\n", item, TALLY[item], FEATURE[item]);
+    }
+}

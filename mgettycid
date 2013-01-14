@@ -1,0 +1,64 @@
+#! /bin/sh
+
+tail --lines=0 --follow=name /var/log/mgetty.log.${1:?} | gawk  '
+BEGIN {
+
+for (i in ARGV) { LINE=ARGV[i]; ARGV[i]=""; }
+
+logfile="/var/tmp/cid.log";
+loghtml="/var/www/vhost/duonet.net/cid/cid.html";
+
+DESC["ttyS0"]="Line 2";
+DESC["ttyUSB0"]="Line 1";
+
+if (LINE in DESC) { LINE=DESC[LINE] } ;
+}
+
+function writeit() {
+	printf("%d:%s:%s:%s\n", systime(), LINE, NMBR, NAME) >>logfile;
+	fflush(logfile);
+	close(logfile);
+
+	NUMBER=NMBR;
+
+	if(length(NMBR)==10) {
+		NUMBER="(" substr(NMBR,1,3) ") " substr(NMBR,4,3) "-" substr(NMBR,7);
+	}
+	if(match(NMBR,"^[Oo]")) { NUMBER="Out of Area"; }
+	if(match(NMBR,"^[Pp]")) { NUMBER="Private"; }
+
+	printf("<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n", strftime("%l:%M%p %a %b %d",systime()), LINE, NUMBER, NAME) >>loghtml;
+	fflush(loghtml);
+	close(loghtml);
+
+	NMBR="Unknown";
+	NAME="Unknown";
+}
+
+
+/ got: .*NMBR/ {
+	NEWCALL++;
+	sub("^.*= *","");
+	sub(" *[[]0d[]]$","");
+	NMBR=$0;
+}
+
+/ got: .*NAME/ {
+	sub("^.*= *","");
+	sub(" *[[]0d[]]$","");
+	NAME=$0;
+}
+
+/phone stopped ringing/ {
+	if(NEWCALL) {
+		writeit();
+		NEWCALL=0;
+	}
+}
+/ got: .*RING/ {
+	if(NEWCALL) {
+		writeit();
+		NEWCALL=0;
+	}
+}
+' ${1:?}

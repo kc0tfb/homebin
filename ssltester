@@ -1,0 +1,15 @@
+#!/bin/bash
+(while read ip foo; do
+
+nmap -P0 -sT -p 443,465,636,563,993,995 -oG /dev/stdout $ip | awk '
+/scan initiated/ {IP=$NF};
+/443.tcp *open/ { system("/usr/local/bin/ssltest " IP) };
+/465.tcp *open/ { system("/usr/local/bin/ssltest -s " IP " 465") };
+/563.tcp *open/ { system("/usr/local/bin/ssltest -s " IP " 563") };
+/636.tcp *open/ { system("/usr/local/bin/ssltest -s " IP " 636") };
+/993.tcp *open/ { system("/usr/local/bin/ssltest -I " IP " 993") };
+/995.tcp *open/ { system("/usr/local/bin/ssltest -P " IP " 995") };
+'
+
+done ) < ${1:?} > $1.out
+

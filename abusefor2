@@ -1,0 +1,45 @@
+#!/usr/bin/gawk -f
+# obtain abuse contact(s) for IP as either argument or on STDIN/file
+# if called with an IP as an argument, exit immediately (with 0 on success, 1 on failure)
+
+function Abusix(ip) {
+  split(ip,I,"[.]");
+  q=sprintf("host -t txt %s.%s.%s.%s.abuse-contacts.abusix.org 2>/dev/null", I[4],I[3],I[2],I[1]);
+  
+  i=0;
+  delete EMAIL;
+  while (q | getline) {
+    if (index($0, " descriptive text ")) {
+      gsub("\042","",$NF);
+      EMAIL[i++]=$NF;
+    }
+  }
+  close(q);
+
+  if (i > 0) {    # success!
+    i=0;
+    rcpt="";
+    while (i in EMAIL) {
+      if (i>0) rcpt=rcpt ",";
+      rcpt=rcpt EMAIL[i++];
+    }
+    printf("%s\n", rcpt);
+    return(0);
+  } else {
+    return(1);
+  }
+}
+
+BEGIN {
+  if (length(ARGV[1])>0) {
+    rc=Abusix(ARGV[1]);
+    ARGV[1]="";
+    exit(rc);
+  }
+}
+
+
+/^[0-9]+[.][0-9]+[.][0-9]+[.][0-9]+/ {
+  Abusix($1);
+}
+  

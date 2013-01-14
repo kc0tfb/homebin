@@ -1,0 +1,6 @@
+#!/bin/bash
+# $1 == printer name or IP to set
+# $2... == string to set on LCD
+printer=$1
+shift
+echo -e "\E%-12345X@PJL RDYMSG DISPLAY = \"${*:?}\"\r\n\E%-12345X\r\n" | nc -w 1 $printer 9100

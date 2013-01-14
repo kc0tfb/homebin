@@ -1,0 +1,61 @@
+#!/usr/bin/awk -f
+# Simple postfix log analyser by luno at luno dot org.
+# Count rejects of various sorts and print a summary and tally.
+#
+# 2005 Nov 30 - added HTML output.  See BEGIN and END.
+# 2006 Aug 28 - Debian etch: you may need to 'apt-get install gawk'.
+#
+# I'm not happy about the html output, but I've got to do other stuff today,
+# so I'm leaving it as-is for now.  At least it's parseable. -luno
+
+BEGIN {
+IGNORECASE++;	# Because it makes life easier.
+HTML=0;		# Set this to 0 for text output.
+}
+
+# Store date from first line.  If feeding multiple files to me, make
+# sure oldest is first (or I will lie about the start date).
+{ if (NR==1) { startdate=$1 " " $2; }}
+ 
+#### Skip AVS warnings; these messages are not really rejected.
+/: reject: .* Address verification in progress;/ { next; }
+
+# Specific User unknown counters; use these or the prior ones.
+/: reject: .* Recipient address rejected: Access denied/ {
+	u=$0;
+	sub("^.*to=<","Recipient access denied: ",u);
+	sub(">.*","",u);
+	rej[tolower(u)]++;
+	next;
+}
+/: reject: .* 550 / { 
+	u=$0;
+	sub("^.*to=<","",u);
+	sub(">.*","",u);
+	rej["Rejected To: " tolower(u)]++; next;
+}
+
+#### Complex counter rules with string manipulation; Keep these at the end
+#### to make processing more efficient.
+
+
+#### Print summary and tally.
+END {
+  # Try piping HTML output through 'sort -n'...
+  if (HTML) {
+    printf("<!-- 0 --><table>\n");
+    for(reason in rej) {
+      printf("<!-- 5 --><tr><td> %10s </td><td>%s</td></tr>\n", rej[reason], reason);
+      t+=rej[reason];
+    }
+    printf("<!-- 1 --><tr><th colspan=2>Total rejects since %s: %s</th></tr>\n", startdate, t);
+    printf("<!-- 9 --></table>\n");
+  } else {
+    for(reason in rej) {
+      printf("%-10s %s\n", rej[reason], reason);
+      t+=rej[reason];
+    }
+    printf("Total rejects since %s: %s\n", startdate, t);
+  }
+}
+# EOF

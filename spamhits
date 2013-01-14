@@ -1,0 +1,16 @@
+#!/usr/bin/awk -f
+/NOQUEUE: reject: RCPT from/ {
+    Source=$10;
+    Hits[Source]++;
+}
+
+END {
+    for ( Source in Hits) {
+        NAME=Source;
+	IP=Source;
+        gsub("[[].*$","",NAME);
+        gsub("^.*[[]","",IP);
+        gsub("[]].*$","",IP);
+	printf("%10-s %-16s %s\n", Hits[Source], IP, NAME);
+    }
+}

@@ -1,0 +1,38 @@
+#!/bin/bash
+# take message on stdin, save to /vhost/luno.org/spam/yyyy/mm/msgid.txt
+# then complain to each email address given in ARGs
+
+umask 022
+
+# [ -t ] && { echo "$0: Error: This is meant to run as a pipe. I.E. cat spam | $0 abuse@foo.net" ; exit 1 }
+
+date=`date +%Y/%b`
+dir="/vhost/luno.org/spam/${date:?}"
+
+mkdir -p ${dir:?}
+# [ ! -d $dir ] && { echo $0: Error: $dir is not a directory.; exit 1 }
+
+N=0
+while [ -f "${dir:?}/${N:?}.txt" ]; do N=$[$N+1]; done
+file="${dir:?}/${N:?}.txt"
+url="http://spam.luno.org/${date:?}/${N:?}.txt"
+
+cat /dev/stdin > ${file:?}
+
+mail -s "Spam from your netblock" ${*:?} << END
+
+Hello.  I'm the owner of the 64.105.232.240/29 netblock.  I recently
+received unsolicited bulk email from a machine within your netblock.
+
+The full message follows, and is also archived at ${url:?}
+
+Note that "X-Spam-Status:" and "X-Spam-Level:" headers, if present, have
+been added by our local software, and should not be considered part of the
+original message.
+
+
+Thanks,
+ - Peter
+--- Spam Follows ---
+`cat ${file:?}`
+END

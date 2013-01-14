@@ -1,0 +1,75 @@
+#! /bin/awk -f 
+#
+# CIDR Parser for www.iana.org's list of reserved ip4 netblocks
+# http://www.duonet.net/sectools/
+#
+# See also http://www.iana.org/assignments/ipv4-address-space
+#
+# parse-iana-reserved Rel Jan-3-2003 by peter @ duonet net
+# Released under the GPL, version 2.
+#
+
+BEGIN {
+	IGNORECASE++;
+i=0;
+};
+
+function Simplify(   tgtmask) {
+    lastone=asort(NET);
+    i=0;
+    mymod=(2^(9-tgtmask));
+    mystep=(2^(8-tgtmask));
+
+#  This is UGLY.  But it works.  ;)
+
+    while(i <= lastone) {
+        if(i in NET) {
+	    if((NET[i] % mymod)==0) {
+		if ((MASK[NET[i]]==tgtmask) && \
+			(MASK[NET[(i+1)]]==tgtmask) && \
+			(NET[i]+mystep) == NET[(i+1)])  {
+		    MEMBERS[NET[i]]=MEMBERS[NET[i]] " " NET[(i+1)] " " MEMBERS[NET[(i+1)]];
+		    delete MASK[NET[(i+1)]];
+		    delete NET[(i+1)];
+		    MASK[NET[i]]--;
+		}
+	    }
+        }
+        i++;
+    }
+}
+
+
+/^[0-9].*reserved/ {
+	net=$1;
+	sub("/.*","",net);
+	sub("^0","",net);
+	sub("^0","",net);
+	mask=$1;
+	sub(".*/","",mask);
+	NET[i++]=net;
+	MASK[net]=mask;
+#DBG#	printf("Read net=%s, mask=%s\n",net,mask);
+}
+
+END {
+    Simplify(8);
+    Simplify(7);
+    Simplify(6);
+    Simplify(5);
+    Simplify(4);
+    Simplify(3);
+
+    lastone=asort(NET);
+    i=0;
+
+    while(i <= lastone) {
+        if(i in NET) {
+#DBG#   printf("%s.0.0.0/%s\t# %s\n", NET[i], MASK[NET[i]], MEMBERS[NET[i]]);
+    	printf("%s.0.0.0/%s\n", NET[i], MASK[NET[i]]);
+        }
+        i++;
+    }
+
+
+}

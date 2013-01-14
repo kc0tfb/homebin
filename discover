@@ -1,0 +1,11 @@
+#!/bin/bash
+# IP should be first argument, further args are comments to be logged/ignored
+( # parens for output redirection
+if fgrep -q " ${1:?} " /var/log/discover.log; then
+  echo "**** `date` $0 $* (Repeat scan request ignored)" 
+  exit 0
+fi
+echo "**** `date` $0 $* " 
+whois ${1} 
+nmap -A -T4 ${1:?} 
+) | tee -a /var/log/discover.log

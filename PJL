@@ -1,0 +1,13 @@
+#!/bin/bash
+[ $# -lt 2 ] && echo "$0: Send a PJL command to a JetDirect printer
+Usage:
+  `basename $0` printer command
+  printer == hostname or IP address of printer
+  command == PJL command to send
+  
+  See http://lprng.sourceforge.net/DISTRIB/RESOURCES/DOCS/pjltkref.pdf" && exit 0
+
+printer=${1:?}
+shift
+echo -e "\E%-12345X@PJL ${*:?}\r\n\E%-12345X\r\n" | nc -w 1 $printer 9100 | \
+tr -d '[\000\001\002\003\004\005\006\007\010\011\013\014\015\016\017\020\021\022\023\024\025\026\027\030]'

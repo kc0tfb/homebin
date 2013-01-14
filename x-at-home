@@ -1,0 +1,5 @@
+#!/bin/bash
+xrandr --output VGA-1 --right-of LVDS-1
+xrandr --output LVDS-1 --mode 1440x900
+xrandr --output VGA-1 --mode 1280x1024
+xrandr --output VGA-1 --right-of LVDS-1

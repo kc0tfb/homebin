@@ -1,0 +1,12 @@
+#!/usr/bin/gawk -f
+# Trivial (g)awk to show only the first "Received" header of each message in
+# a mailbox file, by luno at luno dot org.
+
+BEGIN {IGNORECASE++;}
+/^from / {showit++;}
+/^received: / {
+  if(showit) {
+    sub("^.*[(]","");
+    showit=0;
+  }
+}

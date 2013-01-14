@@ -1,0 +1,34 @@
+#!/bin/bash
+cd $HOME/cdrip || exit 1
+
+umask 002
+dt=`date +"%X %x"` 
+echo "$dt $*" >> /home/peter/.cdriplog
+case $1 in
+	*sr0)
+	color=goldenrod
+	hosts=event1,event2,localhost
+	geom=102x20+0+0
+	# upper left hand corner.
+	;;
+	*sr1)
+	color=palegreen
+	hosts=event3,event4,event9
+	geom=102x20-0+0
+	# upper right hand corner.
+	;;
+	*sr2)
+	color=pink
+        hosts=event5,oberon,bus
+	geom=102x20+0-0
+	# lower left hand corner.
+	;;
+	*)
+	color=cyan
+	hosts=skadi,hyperion,europa
+	geom=102x20-0-0
+	# lower right hand corner.
+	;;
+esac
+export hosts
+exec pterm -geometry $geom -T "Rip:$1 @ $dt" -fg $color -bg black -e /home/peter/bin/cdrip2 $1

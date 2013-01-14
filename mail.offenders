@@ -1,0 +1,30 @@
+#!/bin/bash
+
+/usr/bin/gawk '
+/address verification/ { next; }
+/ NOQUEUE: reject: / {
+  sub("^.*NOQUEUE: reject: ","");
+  reason=$0;
+  sub("^.*>: ","",reason);
+  sub(" proto=[^ ]* "," ",reason);
+  sub("^.*Client host rejected: ","",reason);
+# Dynamic address rejected; See http://LRED.Luno.org/?p=DIGITS0
+  sub("^.*ess rejected; See http://LRED.Luno.org/.p=","Dynamic address rejected by rule ",reason);
+  sub(";.*$","",reason);
+
+# Oct 19 12:17:08 oberon postfix/smtpd[27767]: NOQUEUE: reject: RCPT from 130.Red-83-58-50.dynamicIP.rima-tde.net[83.58.50.130]: 550 5.7.1
+# <130.Red-83-58-50.dynamicIP.rima-tde.net[83.58.50.130]>: Client host rejected: Dynamic address rejected; See http://LRED.Luno.org/?p=DIGITS0;
+# from=<lesseeac465@rotondo.com> to=<xt@duonet.net> proto=ESMTP helo=<130.Red-83-58-50.dynamicIP.rima-tde.net>
+
+#  sub("^.*[[]","",$3);
+#  sub("[^0-9.]","",$3);
+  sub(":","",$3);
+  hits[$3]++;
+  last[$3]=reason;
+};
+
+END {
+  for (ip in hits) {
+    printf("%7d %55s %s\n", hits[ip], ip, last[ip]);
+  }
+};' ${1:-/var/log/mail.log} | sort -rn |head -20

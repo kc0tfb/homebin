@@ -1,0 +1,17 @@
+#!/usr/bin/gawk -f
+BEGIN {
+  for (i in ARGV) {
+    if (i==0) continue;
+    fields="";
+    printf("# dbfinfo extracted from %s:\n", ARGV[i]);
+    while ((("dbfinfo " ARGV[i]) | getline) > 0) {
+        if ( $1 == "Info" ) NF=0;
+        if ( NF == 3 ) {
+            fields=fields ":" $1;
+        }
+    }
+    close("dbfinfo " ARGV[i]);
+    sub("^:","",fields);
+    printf("dbfinfo=\042%s\042;\n", fields);
+}
+}

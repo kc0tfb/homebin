@@ -1,0 +1,2 @@
+while read a; do host -t ptr $a 2>&1; done
+ 

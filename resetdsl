@@ -1,0 +1,20 @@
+#!/bin/bash
+# I hate that I had to write this.
+
+exit 0
+
+# ipcolo2.Chicago1.Level3.net
+# ipcolo1.chicago1.level3.net
+# 172.31.255.253 - DSLAM
+
+URL="http://64.105.232.241/reset/?cb2=restart"
+
+fping -q 172.31.255.253 && exit 0
+fping -q 209.244.2.78 && exit 0
+fping -q 209.244.2.77 && exit 0
+sleep 15
+fping -q 172.31.255.253 && exit 0
+fping -q 209.244.2.78 && exit 0
+fping -q 209.244.2.77 && exit 0
+date "+%X %x resetting dsl" >>/var/tmp/resetdsl.log
+lynx -auth=admin:lbdsl -dump "${URL:?}" > /dev/null

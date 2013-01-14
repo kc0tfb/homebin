@@ -1,0 +1,88 @@
+#!/usr/bin/awk -f
+# Simple postfix log analyser by luno at luno dot org.
+# Count rejects of various sorts and print a summary and tally.
+#
+# 2005 Nov 30 - added HTML output.  See BEGIN and END.
+#
+# I'm not happy about the html output, but I've got to do other stuff today,
+# so I'm leaving it as-is for now.  At least it's parseable. -luno
+
+BEGIN {
+IGNORECASE++;	# Because it makes life easier.
+HTML=0;		# Set this to 0 for text output.
+}
+
+# Store date from first line.  If feeding multiple files to me, make
+# sure oldest is first (or I will lie about the start date).
+{ if (NR==1) { startdate=$1 " " $2; }}
+ 
+#### Skip AVS warnings; these messages are not really rejected.
+/: reject: .* Address verification in progress;/ { next; }
+
+#### Simple counter rules
+/: reject: .* Recipient address rejected: Spam trapped./  { rej["Spam Trap"]++; next; }
+/: reject: .* Client host rejected: You have no PTR record/ { rej["Client: Not in DNS"]++; next; }
+/: reject: .* Client host rejected: cannot find your hostname/ { rej["Client: Not in DNS"]++; next; }
+/: reject: .* Client host rejected: No mail accepted from/ { rej["Client: No mail accepted from X"]++; next; }
+/: reject: .* Helo command rejected: Host not found/ { rej["HELO: Not in DNS"]++; next; }
+/: reject: .* Helo command rejected: need fully-qualified hostname/ { rej["HELO: Not a FQDN"]++; next; }
+/: reject: .* Helo command rejected: / { rej["HELO: Impostor"]++; next; }
+/: reject: .* Relay access denied;/ { rej["SMTP: Relay denied"]++; next; }
+/: reject: .* Sender address rejected: Domain not found/ { rej["Sender: Domain not found"]++; next; }
+/: reject: .* Sender address rejected: need fully-qualified address;/ { rej["Sender: address without FQDN or malformed"]++; next; }
+/: reject: .* Sender address rejected: / { rej["Sender: rejected by access.sender.db"]++; next; }
+/: reject: .* SMTP command pipelining/ { rej["SMTP: Pipelining unauthorized"]++; next; }
+/: reject: .* http:..spf.pobox.com/ { rej["Blocked by SPF policy"]++; next; }
+/: reject: .* dynamic address / { rej["Client: Dynamic address rejected"]++; next; }
+
+# Generic User unknown counters; use these or the next ones.
+/: reject: .* Recipient address rejected: undeliverable address: unknown user:/ { rej["User Unknown"]++; next; }
+/: reject: .* Recipient address rejected: User unknown/ { rej["User Unknown"]++; next; }
+/: reject: .* Recipient address rejected: Access denied/ { rej["Access denied by access.recipient.db"]++; next; }
+
+
+# Specific User unknown counters; use these or the prior ones.
+#/: reject: .* Recipient address rejected: Access denied/ { u=$0;sub("^.*to=<","Recipient access denied: ",u);sub(">.*","",u);rej[tolower(u)]++; next; }
+#/: reject: .*undeliverable address: unknown user:/ { 
+#	u=$0;
+#	sub("^.*unknown user: \042","",u);
+#	sub("\042.*","",u);
+#	rej["User Unknown: " tolower(u)]++; next;
+#}
+#/: reject: .* address rejected:/ { 
+#	u=$0;
+#	sub("^.*to=<","",u);
+#	sub(">.*","",u);
+#	rej["User Unknown: " tolower(u)]++; next;
+#}
+
+#### Complex counter rules with string manipulation; Keep these at the end
+#### to make processing more efficient.
+
+/: reject: .* Recipient address rejected: Please see/ { r=$0; sub("^.* see http://","RBL: reject by ",r); sub("/.*","",r); rej[r]++; next;  }
+/: reject: .* blocked using / { r=$0; sub("^.*blocked using ","RBL: reject by ",r); sub(";.*","",r); rej[r]++; next; }
+
+# default rule; log entire reject if we didn't match any rules above.
+/: reject: .* Recipient address rejected: / { rej["Recipient reject: other"]++; next; }
+/: reject: .* / {r=$0; sub("^.*: reject: ","",r); rej[r]++; next; }
+
+#### Print summary and tally.
+END {
+  # Try piping HTML output through 'sort -n'...
+  if (HTML) {
+    printf("<!-- 0 --><table>\n");
+    for(reason in rej) {
+      printf("<!-- 5 --><tr><td> %10s </td><td>%s</td></tr>\n", rej[reason], reason);
+      t+=rej[reason];
+    }
+    printf("<!-- 1 --><tr><th colspan=2>Total rejects since %s: %s</th></tr>\n", startdate, t);
+    printf("<!-- 9 --></table>\n");
+  } else {
+    for(reason in rej) {
+      printf("%-10s %s\n", rej[reason], reason);
+      t+=rej[reason];
+    }
+    printf("Total rejects since %s: %s\n", startdate, t);
+  }
+}
+# EOF

@@ -1,0 +1,24 @@
+#!/usr/bin/awk -f
+#
+# Feed me with "id3 -lR files | renamer"
+#
+
+/Filename: / {
+	sub("Filename: ","");
+	filena=$0;
+	next;
+}
+/Title: / {
+	sub("Title: ","");
+	title=$0;
+	sub(" *$","",title);
+	gsub("[^0-9A-Za-z .,!&()-]","",title);
+	next;
+}
+/Artist: / {
+	sub("Artist: ","");
+	artist=$0;
+	sub(" *$","",artist);
+	gsub("[^0-9A-Za-z .,!&()-]","",artist);
+	printf("mv -i \047%s\047 \047%s-%s.mp3\047\n",filena,artist,title);
+}

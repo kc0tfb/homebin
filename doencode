@@ -1,0 +1,21 @@
+#!/bin/bash
+cd $HOME/cdrip
+while true; do 
+# get list of queue dirs to work on, starting with the oldest
+for dir in `ls -1dtr abcde.[a-f0-9]*`; do 
+  [ -f ${dir}/status ] || continue
+  # get track count
+  lasttrack=`awk -F= '/cdparanoia-audio-tracks/ {print $NF}' ${dir}/status`
+  # if we couldn't get it, move to the next dir.
+  [ "x$lasttrack" == "x" ] && continue
+  # if the last track isn't done reading, move on.
+  grep -q "^readtrack-${lasttrack:?}" ${dir:?}/status || continue
+  
+  discid=`echo ${dir}|awk -F. '{print $NF}'`
+  
+  abcde -V -p -k -N -U -f -a normalize,encode,tag,move,clean -C ${discid:?} && \
+  mv ${dir}/status ${dir}/status.done
+  
+done
+sleep 5
+done

@@ -1,0 +1,5 @@
+#1/bin/bash
+for a in ${*:?}; do
+    echo -e "\n---- $a ----\n"
+    count-mtfcc-nfn $a
+done

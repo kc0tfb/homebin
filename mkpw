@@ -1,0 +1,5 @@
+#!/bin/bash
+# Deprecated, but useful on older (or embedded) systems that don't have better tools.
+# When supplied with a numeric argument N, generate password N chars in length, otherwise 8 chars.
+dd if=/dev/random bs=${1:-8} count=1 2>/dev/null | tr "\000-ÿ" "A-Za-z0-9{};:!#$%^_=+A-Za-z0-9{};:!#$%^_=+A-Za-z0-9{};:!#$%^_=+A-Za-z0-9{};:!#$%^_=+"
+echo

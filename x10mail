@@ -1,0 +1,10 @@
+#!/bin/awk -f
+BEGIN {
+IGNORECASE++;
+ROCKET="/usr/bin/br -c e -r 2 -x /dev/ttyUSB0 "
+}
+/:/ { next; }
+/-/ { next; }
+{ gsub("[^a-zA-Z0-9, ]",""); }
+/on/ { system(ROCKET $0); }
+/off/ { system(ROCKET $0); }

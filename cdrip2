@@ -1,0 +1,9 @@
+#!/bin/bash
+umask 002
+abcde -N -a read,cddb -k -U -V -x -d $1
+eject $1
+sleep 1
+eject $1
+sleep 1
+eject $1
+exit 0
