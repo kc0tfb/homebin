@@ -1,0 +1,22 @@
+#!/usr/bin/gawk -f
+# Copyright 2013 Peter Gamache, KC0TFB.
+# CC-Attribution-NonCommercial license.  RELEASED WITH NO WARRANTY WHATSOEVER.
+#
+# Word-based passphrase generator.  By default, uses 4 words >4 characters in length.
+# Inspired by the "correct horse battery staple" episode of XKCD comic (xkcd.com)
+
+# Load the system default dictionary (works under Ubuntu/Debian, at least)
+BEGIN { ARGV[1]="/usr/share/dict/words"; ARGC++; }
+
+# Store words in an array
+/^[a-z]+$/ { if (length($1)>4) WORD[w++]=$1; }
+
+# Generate output
+END {
+  srand(); # Seed the PRNG
+  printf("Loaded %\047d words with %\047d possible combinations.\nPassphrase: %s %s %s %s\n", w, w^4, \
+    WORD[int(rand()*w)], WORD[int(rand()*w)], WORD[int(rand()*w)], WORD[int(rand()*w)]);
+}
+
+# As for the program name, it could be an abbreviation for RANDom PASSphrase,
+# or perhaps it's RANDall's PASSphrase.  I'll let you decide.
