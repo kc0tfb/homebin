@@ -12,7 +12,7 @@ function Abusix(ip) {
   delete EMAIL;
 
   # Actual query happens here
-  while (q | getline) {
+  while ((q | getline)>0) {
     if (index($0, " descriptive text ")) {
       gsub("\042","",$NF);
       EMAIL[i++]=$NF;
