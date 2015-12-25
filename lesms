@@ -1,0 +1,51 @@
+#!/usr/bin/perl
+# lesms : Send SMS message via LES.NET web interface.
+# Copyright May 2015 : KC0TFB : Peter Gamache : NO WARRANTY!
+# Released under terms of GNU GPL version 2.
+
+# Changelog:
+# 2015-05-05: Initial version
+# 2015-05-18: Prepend "1" if 10 digit destination provided
+# 2015-12-21: join() remainder of ARGV, which removes need for quoted $message
+
+# This script requires a line in your ~/.netrc like:
+#
+#     machine les.net login FRED password SECRET account 16125551212
+#
+# Replace FRED and SECRET with your login details.
+# Replace 16125551212 with the DID that you wish to send SMS *FROM*.
+
+# Message on command line:    lesms DESTINATION "Message, good sir."
+# Message on standard input:  echo "Thank you milady." | lesms DESTINATION
+# DESTINATION is an 11 digit number; "1" prepended if 10 digits are provided.
+
+use strict;
+use warnings;
+use Net::Netrc;
+use WWW::Mechanize;
+use IO::Socket::SSL;
+use Carp;
+
+$dest = shift(@ARGV);
+$message = (join(' ', @ARGV) || <STDIN>);
+$dest =~ s/[^0-9]//g;
+if ($dest =~ /^[0-9]{10}$/) { $dest = "1" . $dest; };
+croak qq(Destination $dest is invalid, should be 10 or 11 digits) unless $dest =~ /^[0-9]{11}$/;
+printf("Sending \042%s\042 to %s...\n", $message, $dest);
+$netrc = Net::Netrc->lookup('les.net');
+($login, $pass, $acct) = $netrc->lpa;
+croak qq(Account $acct is invalid, should be 11 digits) unless $acct =~ /^[0-9]{11}$/;
+$mech = WWW::Mechanize->new();
+$result = $mech->get( 'https://les.net/login.php' );
+croak qq(GET login form failed.) unless $result->is_success;
+$mech->set_visible($login, $pass);
+$result = $mech->click();
+croak qq(POST to login form failed.) unless $result->is_success;
+$result = $mech->get( 'https://les.net/txtmsg.php?did=' . $acct );
+croak qq(GET txtmsg.php failed.) unless $result->is_success;
+$mech->field('did_dst', $dest);
+$mech->field('did_msg', $message);
+$result = $mech->click_button( name => 'did_tx' );
+croak qq(POST to txtmsg.php failed.) unless $result->is_success;
+
+# EOF
