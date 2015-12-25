@@ -8,5 +8,5 @@ ljlcd - Change "READY" message on the LCD display a networked HP LaserJet. Requi
 
 lesms - Send SMS via LES.NET from the command line (uses perl + WWW::Mechanize)
 
-	Using standard input:	uname -a | lesms 16125551212
-	Using command line:	lesms 16665551212 "I ate your homework. Woof."
+	Using standard input:   uname -a | lesms 16125551212
+	Using command line:     lesms 16665551212 "I ate your homework. Woof."
