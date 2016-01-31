@@ -1,2 +1,0 @@
-#!/bin/bash
-exec /home/peter/bin/cdrip1 /dev/sr0
