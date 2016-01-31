@@ -1,0 +1,19 @@
+#!/bin/sh
+#
+# Know what sucks? A media PC that turns the screen off during a movie.
+# This systemd-friendly init script uses setterm to disable screen blanking.
+#
+### BEGIN INIT INFO
+# Provides:          setterm-noblank
+# Required-Start:    
+# Required-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: setterm
+# Description:       Disable screen blanking using setterm
+### END INIT INFO
+
+for t in /dev/tty[0-9]*; do
+  setterm --blank 0 < $t > $t 2>/dev/null
+  setterm --powersave off < $t > $t 2>/dev/null
+done
